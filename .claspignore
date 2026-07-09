@@ -1,0 +1,10 @@
+# clasp only pushes files matching the allow-list below.
+# Everything else (README, the static GitHub Pages index.html, plain-text
+# style.css/script.js mirrors, git metadata) stays out of the Apps Script
+# project.
+**/**
+!Code.gs
+!appsscript.json
+!Index.html
+!Stylesheet.html
+!JavaScript.html

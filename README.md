@@ -74,6 +74,11 @@ domain).
 
 ## 3. Deploying as a Google Apps Script Web App
 
+**Prefer the command line?** See [`DEPLOY_WITH_CLASP.md`](./DEPLOY_WITH_CLASP.md)
+for a `clasp login` / `clasp push` / `clasp deploy` workflow (3 commands,
+run from your own machine with your own Google login) instead of the manual
+copy-paste steps below.
+
 1. Go to [script.google.com](https://script.google.com) → **New Project**.
 2. Rename the project (e.g. "WDCW Peddapalli Recruitment Portal").
 3. Delete the default `Code.gs` content and paste in this repo's `Code.gs`.
