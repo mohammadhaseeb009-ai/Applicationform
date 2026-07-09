@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WD&amp;CW Peddapalli - Online Recruitment Application</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <?!= include('Stylesheet'); ?>
+</head>
+<body>
+
+<!-- ==================== LOADING OVERLAY ==================== -->
+<div id="loadingOverlay" class="loading-overlay d-none">
+  <div class="spinner-border text-light" role="status"></div>
+  <div id="loadingText" class="loading-text">Processing, please wait...</div>
+</div>
+
+<!-- ==================== TOAST CONTAINER ==================== -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:1080">
+  <div id="appToast" class="toast align-items-center border-0" role="alert">
+    <div class="d-flex">
+      <div class="toast-body" id="appToastBody">Message</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== HEADER ==================== -->
+<header class="gov-header sticky-top">
+  <div class="header-top">
+    <div class="header-logo-box">
+      <!-- Placeholder: replace src with the official Telangana State Emblem image if required -->
+      <img src="https://upload.wikimedia.org/wikipedia/commons/0/0e/Seal_of_Telangana.svg" alt="Telangana State Emblem" class="header-logo" id="emblemLogo">
+    </div>
+    <div class="header-title-box">
+      <h1 class="header-title-main">Government of Telangana</h1>
+      <h2 class="header-title-sub">Women Development and Child Welfare Department</h2>
+      <h3 class="header-title-district">Peddapalli District</h3>
+    </div>
+    <div class="header-logo-box">
+      <!-- Placeholder: replace src with the official WD&CW Department logo if required -->
+      <img src="https://upload.wikimedia.org/wikipedia/commons/1/16/Emblem_of_India.svg" alt="WD&amp;CW Department Logo" class="header-logo" id="deptLogo">
+    </div>
+  </div>
+  <div class="header-divider"></div>
+  <div class="header-banner">
+    <i class="fa-solid fa-file-lines me-2"></i>ONLINE APPLICATION FORM
+  </div>
+</header>
+
+<!-- ==================== NAV TABS ==================== -->
+<nav class="portal-nav">
+  <div class="container">
+    <div class="btn-group w-100 flex-wrap" role="group">
+      <button type="button" class="btn nav-btn active" data-view="form"><i class="fa-solid fa-pen-to-square me-1"></i> Application Form</button>
+      <button type="button" class="btn nav-btn" data-view="dashboard"><i class="fa-solid fa-magnifying-glass me-1"></i> My Application</button>
+      <button type="button" class="btn nav-btn" data-view="admin"><i class="fa-solid fa-user-shield me-1"></i> Admin Panel</button>
+    </div>
+  </div>
+</nav>
+
+<main class="container my-4">
+
+<!-- ============================================================ -->
+<!-- VIEW: APPLICATION FORM                                        -->
+<!-- ============================================================ -->
+<section id="view-form">
+
+  <div class="progress-wrap mb-4">
+    <div class="progress" style="height:10px;">
+      <div id="formProgressBar" class="progress-bar bg-primary" role="progressbar" style="width:0%"></div>
+    </div>
+    <div class="progress-label" id="formProgressLabel">0% Complete</div>
+  </div>
+
+  <form id="applicationForm" novalidate>
+
+    <!-- SECTION 1: PERSONAL INFORMATION -->
+    <div class="card section-card mb-4">
+      <div class="card-header section-header"><i class="fa-solid fa-id-card me-2"></i>Section 1: Personal Information</div>
+      <div class="card-body">
+        <div class="row g-3">
+
+          <div class="col-md-4">
+            <label class="form-label">Application No.</label>
+            <input type="text" class="form-control" id="applicationNumberPreview" readonly>
+            <small class="text-muted">Confirmed automatically on submission</small>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Position Applied For <span class="req">*</span></label>
+            <select class="form-select" name="positionAppliedFor" required></select>
+          </div>
+
+          <div class="col-md-4"></div>
+
+          <div class="col-md-4">
+            <label class="form-label">Full Name (As per Aadhaar) <span class="req">*</span></label>
+            <input type="text" class="form-control" name="fullName" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Father's Name <span class="req">*</span></label>
+            <input type="text" class="form-control" name="fathersName" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Husband's Name (optional)</label>
+            <input type="text" class="form-control" name="husbandsName">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Mother's Name <span class="req">*</span></label>
+            <input type="text" class="form-control" name="mothersName" required>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label d-block">Gender <span class="req">*</span></label>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="gender" value="Male" required><label class="form-check-label">Male</label></div>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="gender" value="Female"><label class="form-check-label">Female</label></div>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="gender" value="Transgender"><label class="form-check-label">Transgender</label></div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Marital Status <span class="req">*</span></label>
+            <select class="form-select" name="maritalStatus" required>
+              <option value="">Select</option>
+              <option>Married</option>
+              <option>Unmarried</option>
+              <option>Widow</option>
+              <option>Divorced</option>
+            </select>
+          </div>
+
+          <div class="col-md-2">
+            <label class="form-label">Date of Birth <span class="req">*</span></label>
+            <input type="date" class="form-control" name="dob" id="dobInput" required>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Age</label>
+            <input type="text" class="form-control" id="ageDisplay" readonly>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Aadhaar Number <span class="req">*</span></label>
+            <input type="text" class="form-control" name="aadhaar" id="aadhaarInput" maxlength="12" inputmode="numeric" placeholder="12 digit number" required>
+            <div class="invalid-feedback-custom" id="aadhaarFeedback"></div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Mobile Number <span class="req">*</span></label>
+            <input type="text" class="form-control" name="mobile" id="mobileInput" maxlength="10" inputmode="numeric" placeholder="10 digit number" required>
+            <div class="invalid-feedback-custom" id="mobileFeedback"></div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Alternate Mobile Number</label>
+            <input type="text" class="form-control" name="altMobile" maxlength="10" inputmode="numeric">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Email <span class="req">*</span></label>
+            <input type="email" class="form-control" name="email" id="emailInput" required>
+            <div class="invalid-feedback-custom" id="emailFeedback"></div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Category <span class="req">*</span></label>
+            <select class="form-select" name="category" required>
+              <option value="">Select</option>
+              <option>OC</option><option>BC-A</option><option>BC-B</option><option>BC-C</option>
+              <option>BC-D</option><option>BC-E</option><option>SC</option><option>ST</option><option>EWS</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Community</label>
+            <input type="text" class="form-control" name="community">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Religion</label>
+            <input type="text" class="form-control" name="religion">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Nationality</label>
+            <input type="text" class="form-control" name="nationality" value="Indian">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">District <span class="req">*</span></label>
+            <input type="text" class="form-control" name="district" value="Peddapalli" required>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Mandal <span class="req">*</span></label>
+            <input type="text" class="form-control" name="mandal" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Village <span class="req">*</span></label>
+            <input type="text" class="form-control" name="village" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Pincode <span class="req">*</span></label>
+            <input type="text" class="form-control" name="pincode" maxlength="6" inputmode="numeric" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Permanent Address <span class="req">*</span></label>
+            <textarea class="form-control" name="permanentAddress" rows="2" required></textarea>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Correspondence Address <span class="req">*</span></label>
+            <textarea class="form-control" name="correspondenceAddress" rows="2" required></textarea>
+            <div class="form-check mt-1">
+              <input class="form-check-input" type="checkbox" id="sameAsPermanent">
+              <label class="form-check-label small">Same as Permanent Address</label>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label d-block">Local Candidate <span class="req">*</span></label>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="localCandidate" value="Yes" required><label class="form-check-label">Yes</label></div>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="localCandidate" value="No"><label class="form-check-label">No</label></div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Identification Mark 1</label>
+            <input type="text" class="form-control" name="idMark1">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Identification Mark 2</label>
+            <input type="text" class="form-control" name="idMark2">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Applicant Photograph <span class="req">*</span> <small class="text-muted">(JPG/PNG, max 500 KB)</small></label>
+            <input type="file" class="form-control" id="photoInput" accept=".jpg,.jpeg,.png">
+            <div class="upload-preview-box mt-2"><img id="photoPreview" class="upload-preview d-none"></div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Applicant Signature <span class="req">*</span> <small class="text-muted">(JPG/PNG, max 200 KB)</small></label>
+            <input type="file" class="form-control" id="signatureInput" accept=".jpg,.jpeg,.png">
+            <div class="upload-preview-box mt-2"><img id="signaturePreview" class="upload-preview d-none"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: RESERVATION DETAILS -->
+    <div class="card section-card mb-4">
+      <div class="card-header section-header"><i class="fa-solid fa-scale-balanced me-2"></i>Section 2: Reservation Details</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label d-block">Widow</label>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="widow" value="Yes"><label class="form-check-label">Yes</label></div>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="widow" value="No" checked><label class="form-check-label">No</label></div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label d-block">Orphan</label>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="orphan" value="Yes"><label class="form-check-label">Yes</label></div>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="orphan" value="No" checked><label class="form-check-label">No</label></div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label d-block">PwBD</label>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="pwbd" value="Yes" id="pwbdYes"><label class="form-check-label">Yes</label></div>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="pwbd" value="No" id="pwbdNo" checked><label class="form-check-label">No</label></div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label d-block">Ex-serviceman</label>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="exServiceman" value="Yes"><label class="form-check-label">Yes</label></div>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="exServiceman" value="No" checked><label class="form-check-label">No</label></div>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Disability Percentage</label>
+            <input type="number" class="form-control" name="disabilityPercent" min="0" max="100" id="disabilityPercentInput" disabled>
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">Nature of Disability</label>
+            <input type="text" class="form-control" name="disabilityNature" id="disabilityNatureInput" disabled>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Sports Category</label>
+            <input type="text" class="form-control" name="sportsCategory">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label d-block">EWS</label>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="ews" value="Yes"><label class="form-check-label">Yes</label></div>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="ews" value="No" checked><label class="form-check-label">No</label></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: EDUCATIONAL QUALIFICATIONS -->
+    <div class="card section-card mb-4">
+      <div class="card-header section-header"><i class="fa-solid fa-graduation-cap me-2"></i>Section 3: Educational Qualifications</div>
+      <div class="card-body table-responsive">
+        <table class="table table-bordered align-middle" id="educationTable">
+          <thead class="table-light">
+            <tr>
+              <th>Qualification</th><th>Board</th><th>Institution</th><th>Year Passing</th>
+              <th>Hall Ticket No</th><th>Max Marks</th><th>Marks Obtained</th><th>%</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SECTION 4: TRAINING DETAILS -->
+    <div class="card section-card mb-4">
+      <div class="card-header section-header"><i class="fa-solid fa-chalkboard-user me-2"></i>Section 4: Training Details</div>
+      <div class="card-body table-responsive">
+        <table class="table table-bordered align-middle" id="trainingTable">
+          <thead class="table-light">
+            <tr><th>Training</th><th>Institution</th><th>Duration</th><th>Year</th><th>Certificate Number</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <button type="button" class="btn btn-outline-primary btn-sm" id="addTrainingRow"><i class="fa-solid fa-plus me-1"></i>Add More</button>
+      </div>
+    </div>
+
+    <!-- SECTION 5: EMPLOYMENT HISTORY -->
+    <div class="card section-card mb-4">
+      <div class="card-header section-header"><i class="fa-solid fa-briefcase me-2"></i>Section 5: Employment History</div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle" id="employmentTable">
+            <thead class="table-light">
+              <tr><th>Organization</th><th>Designation</th><th>Nature</th><th>From</th><th>To</th><th>Salary</th><th>Responsibilities</th><th></th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn btn-outline-primary btn-sm mb-3" id="addEmploymentRow"><i class="fa-solid fa-plus me-1"></i>Add More</button>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Present Employment Status</label>
+            <input type="text" class="form-control" name="presentEmploymentStatus">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Reason for Leaving</label>
+            <input type="text" class="form-control" name="reasonForLeaving">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 6: COMPUTER SKILLS -->
+    <div class="card section-card mb-4">
+      <div class="card-header section-header"><i class="fa-solid fa-computer me-2"></i>Section 6: Computer Skills</div>
+      <div class="card-body">
+        <div class="row g-2 mb-3" id="computerSkillsGroup">
+          <div class="col-md-3 col-6 form-check"><input class="form-check-input" type="checkbox" value="MS Word" name="computerSkillsCheckbox"><label class="form-check-label">MS Word</label></div>
+          <div class="col-md-3 col-6 form-check"><input class="form-check-input" type="checkbox" value="Excel" name="computerSkillsCheckbox"><label class="form-check-label">Excel</label></div>
+          <div class="col-md-3 col-6 form-check"><input class="form-check-input" type="checkbox" value="PowerPoint" name="computerSkillsCheckbox"><label class="form-check-label">PowerPoint</label></div>
+          <div class="col-md-3 col-6 form-check"><input class="form-check-input" type="checkbox" value="Internet" name="computerSkillsCheckbox"><label class="form-check-label">Internet</label></div>
+          <div class="col-md-3 col-6 form-check"><input class="form-check-input" type="checkbox" value="Email" name="computerSkillsCheckbox"><label class="form-check-label">Email</label></div>
+          <div class="col-md-3 col-6 form-check"><input class="form-check-input" type="checkbox" value="MS Office" name="computerSkillsCheckbox"><label class="form-check-label">MS Office</label></div>
+          <div class="col-md-3 col-6 form-check"><input class="form-check-input" type="checkbox" value="POSHAN Tracker" name="computerSkillsCheckbox"><label class="form-check-label">POSHAN Tracker</label></div>
+          <div class="col-md-3 col-6 form-check"><input class="form-check-input" type="checkbox" value="Child Protection Portal" name="computerSkillsCheckbox"><label class="form-check-label">Child Protection Portal</label></div>
+          <div class="col-md-3 col-6 form-check"><input class="form-check-input" type="checkbox" value="Data Entry" name="computerSkillsCheckbox"><label class="form-check-label">Data Entry</label></div>
+          <div class="col-md-3 col-6 form-check"><input class="form-check-input" type="checkbox" value="Other" name="computerSkillsCheckbox"><label class="form-check-label">Other</label></div>
+        </div>
+        <label class="form-label">Skill Level</label>
+        <select class="form-select w-auto" name="computerSkillLevel">
+          <option value="">Select</option>
+          <option>Excellent</option><option>Good</option><option>Average</option><option>Basic</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- SECTION 7: LANGUAGE SKILLS -->
+    <div class="card section-card mb-4">
+      <div class="card-header section-header"><i class="fa-solid fa-language me-2"></i>Section 7: Language Skills</div>
+      <div class="card-body table-responsive">
+        <table class="table table-bordered align-middle" id="languageTable">
+          <thead class="table-light"><tr><th>Language</th><th>Read</th><th>Write</th><th>Speak</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SECTION 8: CRIMINAL HISTORY -->
+    <div class="card section-card mb-4">
+      <div class="card-header section-header"><i class="fa-solid fa-gavel me-2"></i>Section 8: Criminal History</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label d-block">Charge Sheeted</label>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="chargeSheeted" value="Yes"><label class="form-check-label">Yes</label></div>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="chargeSheeted" value="No" checked><label class="form-check-label">No</label></div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label d-block">Convicted</label>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="convicted" value="Yes"><label class="form-check-label">Yes</label></div>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="convicted" value="No" checked><label class="form-check-label">No</label></div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label d-block">Dismissed</label>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="dismissed" value="Yes"><label class="form-check-label">Yes</label></div>
+            <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="dismissed" value="No" checked><label class="form-check-label">No</label></div>
+          </div>
+          <div class="col-md-12">
+            <label class="form-label">Remarks</label>
+            <textarea class="form-control" name="criminalRemarks" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 9: DOCUMENT UPLOAD -->
+    <div class="card section-card mb-4">
+      <div class="card-header section-header"><i class="fa-solid fa-file-arrow-up me-2"></i>Section 9: Document Upload <small class="fw-normal">(PDF/JPG/PNG, max 2 MB each)</small></div>
+      <div class="card-body">
+        <div class="row g-3" id="documentUploadGroup">
+          <!-- Rows injected by script.js from DOCUMENT_FIELDS config (photo/signature excluded, handled in Section 1) -->
+        </div>
+      </div>
+    </div>
+
+    <!-- DECLARATION -->
+    <div class="card section-card mb-4">
+      <div class="card-header section-header"><i class="fa-solid fa-check-double me-2"></i>Declaration</div>
+      <div class="card-body">
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="declarationCheck" required>
+          <label class="form-check-label fw-semibold" for="declarationCheck">
+            I hereby declare that all the information furnished above is true and correct.
+          </label>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Place <span class="req">*</span></label>
+            <input type="text" class="form-control" name="place" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Date <span class="req">*</span></label>
+            <input type="date" class="form-control" name="declarationDate" id="declarationDateInput" required>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 justify-content-center mb-5">
+      <button type="submit" class="btn btn-primary btn-lg px-4" id="submitBtn"><i class="fa-solid fa-paper-plane me-2"></i>Submit Application</button>
+      <button type="reset" class="btn btn-outline-secondary btn-lg px-4" id="resetBtn"><i class="fa-solid fa-rotate-left me-2"></i>Reset</button>
+      <button type="button" class="btn btn-outline-primary btn-lg px-4" id="printBtn"><i class="fa-solid fa-print me-2"></i>Print Application</button>
+      <button type="button" class="btn btn-outline-primary btn-lg px-4" id="downloadPdfBtn" disabled title="Available after submission"><i class="fa-solid fa-download me-2"></i>Download PDF</button>
+    </div>
+  </form>
+</section>
+
+<!-- ============================================================ -->
+<!-- VIEW: APPLICANT DASHBOARD                                    -->
+<!-- ============================================================ -->
+<section id="view-dashboard" class="d-none">
+  <div class="card section-card mb-4">
+    <div class="card-header section-header"><i class="fa-solid fa-magnifying-glass me-2"></i>Track My Application</div>
+    <div class="card-body">
+      <form id="dashboardSearchForm" class="row g-3">
+        <div class="col-md-5">
+          <label class="form-label">Application Number</label>
+          <input type="text" class="form-control" id="searchAppNumber" placeholder="WDCW-PDP-2026-000001" required>
+        </div>
+        <div class="col-md-5">
+          <label class="form-label">Registered Mobile Number</label>
+          <input type="text" class="form-control" id="searchMobile" maxlength="10" required>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-search me-1"></i>Search</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div id="dashboardResult"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VIEW: ADMIN PANEL                                            -->
+<!-- ============================================================ -->
+<section id="view-admin" class="d-none">
+
+  <div class="card section-card mb-4" id="adminLoginCard">
+    <div class="card-header section-header"><i class="fa-solid fa-lock me-2"></i>Admin Login</div>
+    <div class="card-body">
+      <form id="adminLoginForm" class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-control" id="adminPasswordInput" required>
+        </div>
+        <div class="col-md-6 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-right-to-bracket me-1"></i>Login</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="adminPanelBody" class="d-none">
+    <div class="card section-card mb-4">
+      <div class="card-body">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label">Search (Name / App No / Mobile)</label>
+            <input type="text" class="form-control" id="adminSearchInput">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Filter by Status</label>
+            <select class="form-select" id="adminStatusFilter">
+              <option value="">All</option>
+              <option>Received</option><option>Pending</option><option>Verified</option><option>Rejected</option><option>Selected</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Filter by Position</label>
+            <select class="form-select" id="adminPositionFilter"><option value="">All</option></select>
+          </div>
+          <div class="col-md-2 d-flex gap-2">
+            <button class="btn btn-success w-100" id="adminExportExcelBtn"><i class="fa-solid fa-file-excel me-1"></i>Excel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card mb-4">
+      <div class="card-body table-responsive">
+        <table class="table table-hover align-middle" id="adminTable">
+          <thead class="table-light">
+            <tr>
+              <th>App No.</th><th>Name</th><th>Post</th><th>Mobile</th><th>Submitted</th><th>Status</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="adminApplicantModalContainer"></div>
+</section>
+
+</main>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="gov-footer">
+  <div class="container text-center">
+    <p class="mb-1 fw-semibold">Government of Telangana</p>
+    <p class="mb-1">Women Development and Child Welfare Department</p>
+    <p class="mb-1">Peddapalli District</p>
+    <p class="mb-0 small">Designed &amp; Developed by District Welfare Office, Peddapalli</p>
+  </div>
+</footer>
+
+<!-- ==================== ROW TEMPLATES (used by script.js) ==================== -->
+<template id="tpl-education-row">
+  <tr>
+    <td><input type="text" class="form-control form-control-sm edu-qualification" readonly></td>
+    <td><input type="text" class="form-control form-control-sm edu-board"></td>
+    <td><input type="text" class="form-control form-control-sm edu-institution"></td>
+    <td><input type="text" class="form-control form-control-sm edu-year" inputmode="numeric" maxlength="4"></td>
+    <td><input type="text" class="form-control form-control-sm edu-hallticket"></td>
+    <td><input type="number" class="form-control form-control-sm edu-maxmarks"></td>
+    <td><input type="number" class="form-control form-control-sm edu-obtained"></td>
+    <td><input type="text" class="form-control form-control-sm edu-percentage" readonly></td>
+  </tr>
+</template>
+
+<template id="tpl-training-row">
+  <tr>
+    <td><input type="text" class="form-control form-control-sm tr-training"></td>
+    <td><input type="text" class="form-control form-control-sm tr-institution"></td>
+    <td><input type="text" class="form-control form-control-sm tr-duration"></td>
+    <td><input type="text" class="form-control form-control-sm tr-year" maxlength="4"></td>
+    <td><input type="text" class="form-control form-control-sm tr-certno"></td>
+    <td><button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="fa-solid fa-trash"></i></button></td>
+  </tr>
+</template>
+
+<template id="tpl-employment-row">
+  <tr>
+    <td><input type="text" class="form-control form-control-sm em-organization"></td>
+    <td><input type="text" class="form-control form-control-sm em-designation"></td>
+    <td>
+      <select class="form-select form-select-sm em-nature">
+        <option>Regular</option><option>Contract</option><option>Outsourcing</option>
+      </select>
+    </td>
+    <td><input type="date" class="form-control form-control-sm em-from"></td>
+    <td><input type="date" class="form-control form-control-sm em-to"></td>
+    <td><input type="text" class="form-control form-control-sm em-salary"></td>
+    <td><input type="text" class="form-control form-control-sm em-responsibilities"></td>
+    <td><button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="fa-solid fa-trash"></i></button></td>
+  </tr>
+</template>
+
+<template id="tpl-language-row">
+  <tr>
+    <td><input type="text" class="form-control form-control-sm lang-name" readonly></td>
+    <td class="text-center"><input type="checkbox" class="form-check-input lang-read"></td>
+    <td class="text-center"><input type="checkbox" class="form-check-input lang-write"></td>
+    <td class="text-center"><input type="checkbox" class="form-check-input lang-speak"></td>
+  </tr>
+</template>
+
+<template id="tpl-document-row">
+  <div class="col-md-4">
+    <label class="form-label doc-label"></label>
+    <input type="file" class="form-control doc-input" accept=".pdf,.jpg,.jpeg,.png">
+    <div class="form-text doc-status"></div>
+  </div>
+</template>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  var INITIAL_DATA = <?!= JSON.stringify(getInitialFormData()) ?>;
+</script>
+<?!= include('JavaScript'); ?>
+</body>
+</html>

@@ -1,0 +1,783 @@
+<script>
+/* ============================================================================
+ * WD&CW Peddapalli Recruitment Portal - Client-side logic
+ * ==========================================================================*/
+
+var DOCUMENT_FIELDS = INITIAL_DATA.documentFields; // shared config from Code.gs
+var uploadedFiles = {}; // key -> {name, mimeType, base64}
+var lastSubmittedPdfUrl = '';
+var adminToken = sessionStorage.getItem('wdcwAdminToken') || '';
+var adminRecordsCache = [];
+
+document.addEventListener('DOMContentLoaded', function () {
+  initNav();
+  initFormInitialData();
+  initPersonalInfoLogic();
+  initReservationLogic();
+  initEducationTable();
+  initDynamicTables();
+  initLanguageTable();
+  initDocumentUploads();
+  initFormSubmission();
+  initProgressTracking();
+  initDashboard();
+  initAdmin();
+});
+
+/* ==================== UTILITIES ==================== */
+
+function showLoading(text) {
+  document.getElementById('loadingText').textContent = text || 'Processing, please wait...';
+  document.getElementById('loadingOverlay').classList.remove('d-none');
+}
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.add('d-none');
+}
+function showToast(message, type) {
+  var toastEl = document.getElementById('appToast');
+  document.getElementById('appToastBody').textContent = message;
+  toastEl.classList.remove('bg-success-toast', 'bg-danger-toast');
+  toastEl.classList.add(type === 'success' ? 'bg-success-toast' : type === 'error' ? 'bg-danger-toast' : '');
+  var toast = new bootstrap.Toast(toastEl, { delay: 4500 });
+  toast.show();
+}
+function readFileAsBase64(file) {
+  return new Promise(function (resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var result = reader.result; // data:mime;base64,XXXX
+      var base64 = result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str == null ? '' : String(str);
+  return div.innerHTML;
+}
+
+/* ==================== NAVIGATION ==================== */
+
+function initNav() {
+  var buttons = document.querySelectorAll('.nav-btn');
+  buttons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      buttons.forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      var view = btn.getAttribute('data-view');
+      ['form', 'dashboard', 'admin'].forEach(function (v) {
+        document.getElementById('view-' + v).classList.toggle('d-none', v !== view);
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+}
+
+/* ==================== INITIAL DATA ==================== */
+
+function initFormInitialData() {
+  var positionSelect = document.querySelector('select[name="positionAppliedFor"]');
+  var optionsHtml = '<option value="">Select Position</option>';
+  INITIAL_DATA.positions.forEach(function (p) {
+    optionsHtml += '<option value="' + escapeHtml(p) + '">' + escapeHtml(p) + '</option>';
+  });
+  positionSelect.innerHTML = optionsHtml;
+  document.getElementById('applicationNumberPreview').value = INITIAL_DATA.nextApplicationNumberPreview;
+
+  document.getElementById('adminPositionFilter').innerHTML += INITIAL_DATA.positions.map(function (p) {
+    return '<option value="' + escapeHtml(p) + '">' + escapeHtml(p) + '</option>';
+  }).join('');
+
+  var declDate = document.getElementById('declarationDateInput');
+  declDate.value = new Date().toISOString().split('T')[0];
+}
+
+/* ==================== SECTION 1: PERSONAL INFO LOGIC ==================== */
+
+function initPersonalInfoLogic() {
+  // Age auto-calculation
+  document.getElementById('dobInput').addEventListener('change', function () {
+    var dob = new Date(this.value);
+    if (isNaN(dob.getTime())) { document.getElementById('ageDisplay').value = ''; return; }
+    var today = new Date();
+    var age = today.getFullYear() - dob.getFullYear();
+    var m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+    document.getElementById('ageDisplay').value = age + ' years';
+  });
+
+  // Aadhaar validation (12 digits, numeric only, duplicate check on blur)
+  var aadhaarInput = document.getElementById('aadhaarInput');
+  aadhaarInput.addEventListener('input', function () {
+    this.value = this.value.replace(/\D/g, '').slice(0, 12);
+  });
+  aadhaarInput.addEventListener('blur', function () {
+    var fb = document.getElementById('aadhaarFeedback');
+    if (this.value.length !== 12) {
+      fb.textContent = this.value ? 'Aadhaar number must be exactly 12 digits.' : '';
+      return;
+    }
+    fb.textContent = 'Checking...';
+    google.script.run.withSuccessHandler(function (res) {
+      fb.textContent = res.duplicate ? 'An application already exists with this Aadhaar number.' : '';
+      fb.style.color = res.duplicate ? '#c0392b' : '#1e7e34';
+    }).checkDuplicate('aadhaar', aadhaarInput.value);
+  });
+
+  // Mobile validation (10 digits, duplicate check on blur)
+  var mobileInput = document.getElementById('mobileInput');
+  mobileInput.addEventListener('input', function () {
+    this.value = this.value.replace(/\D/g, '').slice(0, 10);
+  });
+  mobileInput.addEventListener('blur', function () {
+    var fb = document.getElementById('mobileFeedback');
+    if (this.value.length !== 10) {
+      fb.textContent = this.value ? 'Mobile number must be exactly 10 digits.' : '';
+      return;
+    }
+    fb.textContent = 'Checking...';
+    google.script.run.withSuccessHandler(function (res) {
+      fb.textContent = res.duplicate ? 'An application already exists with this Mobile number.' : '';
+      fb.style.color = res.duplicate ? '#c0392b' : '#1e7e34';
+    }).checkDuplicate('mobile', mobileInput.value);
+  });
+  document.querySelector('input[name="altMobile"]').addEventListener('input', function () {
+    this.value = this.value.replace(/\D/g, '').slice(0, 10);
+  });
+  document.querySelector('input[name="pincode"]').addEventListener('input', function () {
+    this.value = this.value.replace(/\D/g, '').slice(0, 6);
+  });
+
+  // Email validation + duplicate check
+  var emailInput = document.getElementById('emailInput');
+  emailInput.addEventListener('blur', function () {
+    var fb = document.getElementById('emailFeedback');
+    var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!re.test(this.value)) {
+      fb.textContent = this.value ? 'Please enter a valid email address.' : '';
+      return;
+    }
+    fb.textContent = 'Checking...';
+    google.script.run.withSuccessHandler(function (res) {
+      fb.textContent = res.duplicate ? 'An application already exists with this Email address.' : '';
+      fb.style.color = res.duplicate ? '#c0392b' : '#1e7e34';
+    }).checkDuplicate('email', emailInput.value);
+  });
+
+  // Same as permanent address
+  document.getElementById('sameAsPermanent').addEventListener('change', function () {
+    var correspondence = document.querySelector('textarea[name="correspondenceAddress"]');
+    if (this.checked) {
+      correspondence.value = document.querySelector('textarea[name="permanentAddress"]').value;
+      correspondence.readOnly = true;
+    } else {
+      correspondence.readOnly = false;
+    }
+  });
+  document.querySelector('textarea[name="permanentAddress"]').addEventListener('input', function () {
+    if (document.getElementById('sameAsPermanent').checked) {
+      document.querySelector('textarea[name="correspondenceAddress"]').value = this.value;
+    }
+  });
+
+  // Photo upload (max 500KB)
+  setupFileUpload('photoInput', 'photoPreview', 'photo', 500, ['image/jpeg', 'image/png']);
+  // Signature upload (max 200KB)
+  setupFileUpload('signatureInput', 'signaturePreview', 'signature', 200, ['image/jpeg', 'image/png']);
+}
+
+function setupFileUpload(inputId, previewId, storeKey, maxKB, allowedMimes) {
+  document.getElementById(inputId).addEventListener('change', function (e) {
+    var file = e.target.files[0];
+    var preview = document.getElementById(previewId);
+    if (!file) { delete uploadedFiles[storeKey]; preview.classList.add('d-none'); return; }
+    if (allowedMimes.indexOf(file.type) === -1) {
+      showToast('Only JPG/PNG files are allowed for this upload.', 'error');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > maxKB * 1024) {
+      showToast('File exceeds maximum size of ' + maxKB + ' KB.', 'error');
+      e.target.value = '';
+      return;
+    }
+    readFileAsBase64(file).then(function (base64) {
+      uploadedFiles[storeKey] = { name: file.name, mimeType: file.type, base64: base64 };
+      if (preview) {
+        preview.src = 'data:' + file.type + ';base64,' + base64;
+        preview.classList.remove('d-none');
+      }
+    });
+  });
+}
+
+/* ==================== SECTION 2: RESERVATION LOGIC ==================== */
+
+function initReservationLogic() {
+  var pwbdYes = document.getElementById('pwbdYes');
+  var pwbdNo = document.getElementById('pwbdNo');
+  var percentInput = document.getElementById('disabilityPercentInput');
+  var natureInput = document.getElementById('disabilityNatureInput');
+  function toggle() {
+    var enabled = pwbdYes.checked;
+    percentInput.disabled = !enabled;
+    natureInput.disabled = !enabled;
+    if (!enabled) { percentInput.value = ''; natureInput.value = ''; }
+  }
+  pwbdYes.addEventListener('change', toggle);
+  pwbdNo.addEventListener('change', toggle);
+}
+
+/* ==================== SECTION 3: EDUCATION TABLE (fixed rows) ==================== */
+
+function initEducationTable() {
+  var qualifications = ['SSC', 'Intermediate', 'Degree', 'PG', 'Professional', 'Other'];
+  var tbody = document.querySelector('#educationTable tbody');
+  var tpl = document.getElementById('tpl-education-row');
+  qualifications.forEach(function (q) {
+    var row = tpl.content.cloneNode(true);
+    row.querySelector('.edu-qualification').value = q;
+    tbody.appendChild(row);
+  });
+  tbody.querySelectorAll('tr').forEach(function (tr) {
+    var maxInput = tr.querySelector('.edu-maxmarks');
+    var obtInput = tr.querySelector('.edu-obtained');
+    var pctInput = tr.querySelector('.edu-percentage');
+    function calc() {
+      var max = parseFloat(maxInput.value);
+      var obt = parseFloat(obtInput.value);
+      if (max > 0 && !isNaN(obt)) {
+        pctInput.value = ((obt / max) * 100).toFixed(2) + '%';
+      } else {
+        pctInput.value = '';
+      }
+    }
+    maxInput.addEventListener('input', calc);
+    obtInput.addEventListener('input', calc);
+  });
+}
+
+function collectEducationDetails() {
+  var rows = [];
+  document.querySelectorAll('#educationTable tbody tr').forEach(function (tr) {
+    var qualification = tr.querySelector('.edu-qualification').value;
+    var board = tr.querySelector('.edu-board').value;
+    var institution = tr.querySelector('.edu-institution').value;
+    var year = tr.querySelector('.edu-year').value;
+    var hallTicket = tr.querySelector('.edu-hallticket').value;
+    var maxMarks = tr.querySelector('.edu-maxmarks').value;
+    var marksObtained = tr.querySelector('.edu-obtained').value;
+    var percentage = tr.querySelector('.edu-percentage').value;
+    if (board || institution || year || hallTicket || maxMarks || marksObtained) {
+      rows.push({ qualification: qualification, board: board, institution: institution, year: year, hallTicket: hallTicket, maxMarks: maxMarks, marksObtained: marksObtained, percentage: percentage });
+    }
+  });
+  return rows;
+}
+
+/* ==================== SECTIONS 4 & 5: DYNAMIC ADD/REMOVE TABLES ==================== */
+
+function initDynamicTables() {
+  addTrainingRow();
+  addEmploymentRow();
+  document.getElementById('addTrainingRow').addEventListener('click', addTrainingRow);
+  document.getElementById('addEmploymentRow').addEventListener('click', addEmploymentRow);
+}
+
+function addTrainingRow() {
+  var tpl = document.getElementById('tpl-training-row');
+  var row = tpl.content.cloneNode(true);
+  row.querySelector('.remove-row').addEventListener('click', function (e) {
+    var tbody = document.querySelector('#trainingTable tbody');
+    if (tbody.children.length > 1) e.target.closest('tr').remove();
+  });
+  document.querySelector('#trainingTable tbody').appendChild(row);
+}
+
+function addEmploymentRow() {
+  var tpl = document.getElementById('tpl-employment-row');
+  var row = tpl.content.cloneNode(true);
+  row.querySelector('.remove-row').addEventListener('click', function (e) {
+    var tbody = document.querySelector('#employmentTable tbody');
+    if (tbody.children.length > 1) e.target.closest('tr').remove();
+  });
+  document.querySelector('#employmentTable tbody').appendChild(row);
+}
+
+function collectTrainingDetails() {
+  var rows = [];
+  document.querySelectorAll('#trainingTable tbody tr').forEach(function (tr) {
+    var training = tr.querySelector('.tr-training').value;
+    var institution = tr.querySelector('.tr-institution').value;
+    var duration = tr.querySelector('.tr-duration').value;
+    var year = tr.querySelector('.tr-year').value;
+    var certificateNumber = tr.querySelector('.tr-certno').value;
+    if (training || institution || duration || year || certificateNumber) {
+      rows.push({ training: training, institution: institution, duration: duration, year: year, certificateNumber: certificateNumber });
+    }
+  });
+  return rows;
+}
+
+function collectEmploymentHistory() {
+  var rows = [];
+  document.querySelectorAll('#employmentTable tbody tr').forEach(function (tr) {
+    var organization = tr.querySelector('.em-organization').value;
+    var designation = tr.querySelector('.em-designation').value;
+    var nature = tr.querySelector('.em-nature').value;
+    var from = tr.querySelector('.em-from').value;
+    var to = tr.querySelector('.em-to').value;
+    var salary = tr.querySelector('.em-salary').value;
+    var responsibilities = tr.querySelector('.em-responsibilities').value;
+    if (organization || designation || from || to) {
+      rows.push({ organization: organization, designation: designation, nature: nature, from: from, to: to, salary: salary, responsibilities: responsibilities });
+    }
+  });
+  return rows;
+}
+
+/* ==================== SECTION 7: LANGUAGE TABLE (fixed rows) ==================== */
+
+function initLanguageTable() {
+  var languages = ['Telugu', 'English', 'Hindi', 'Other'];
+  var tbody = document.querySelector('#languageTable tbody');
+  var tpl = document.getElementById('tpl-language-row');
+  languages.forEach(function (l) {
+    var row = tpl.content.cloneNode(true);
+    row.querySelector('.lang-name').value = l;
+    tbody.appendChild(row);
+  });
+}
+
+function collectLanguageSkills() {
+  var rows = [];
+  document.querySelectorAll('#languageTable tbody tr').forEach(function (tr) {
+    rows.push({
+      language: tr.querySelector('.lang-name').value,
+      read: tr.querySelector('.lang-read').checked,
+      write: tr.querySelector('.lang-write').checked,
+      speak: tr.querySelector('.lang-speak').checked
+    });
+  });
+  return rows;
+}
+
+/* ==================== SECTION 9: DOCUMENT UPLOADS ==================== */
+
+function initDocumentUploads() {
+  var container = document.getElementById('documentUploadGroup');
+  var tpl = document.getElementById('tpl-document-row');
+  DOCUMENT_FIELDS.filter(function (f) { return f.key !== 'photo' && f.key !== 'signature'; }).forEach(function (field) {
+    var node = tpl.content.cloneNode(true);
+    var label = node.querySelector('.doc-label');
+    label.textContent = field.label + (field.required ? ' *' : '') + ' (max ' + field.maxKB + ' KB)';
+    if (field.required) label.classList.add('req-label');
+    var input = node.querySelector('.doc-input');
+    input.id = 'doc_' + field.key;
+    var status = node.querySelector('.doc-status');
+    input.addEventListener('change', function (e) {
+      var file = e.target.files[0];
+      if (!file) { delete uploadedFiles[field.key]; status.textContent = ''; return; }
+      var allowed = ['application/pdf', 'image/jpeg', 'image/png'];
+      if (allowed.indexOf(file.type) === -1) {
+        showToast(field.label + ': only PDF/JPG/PNG allowed.', 'error');
+        e.target.value = '';
+        return;
+      }
+      if (file.size > field.maxKB * 1024) {
+        showToast(field.label + ' exceeds maximum size of ' + field.maxKB + ' KB.', 'error');
+        e.target.value = '';
+        return;
+      }
+      readFileAsBase64(file).then(function (base64) {
+        uploadedFiles[field.key] = { name: file.name, mimeType: file.type, base64: base64 };
+        status.textContent = '✓ ' + file.name;
+        status.style.color = '#1e7e34';
+      });
+    });
+    container.appendChild(node);
+  });
+}
+
+/* ==================== PROGRESS BAR ==================== */
+
+function initProgressTracking() {
+  var form = document.getElementById('applicationForm');
+  form.addEventListener('input', updateProgress);
+  form.addEventListener('change', updateProgress);
+  updateProgress();
+}
+
+function updateProgress() {
+  var form = document.getElementById('applicationForm');
+  var required = form.querySelectorAll('[required]');
+  var filled = 0;
+  var seenRadioGroups = {};
+  required.forEach(function (el) {
+    if (el.type === 'radio') {
+      if (seenRadioGroups[el.name]) return;
+      seenRadioGroups[el.name] = true;
+      if (form.querySelector('input[name="' + el.name + '"]:checked')) filled++;
+    } else if (el.value && el.value.trim() !== '') {
+      filled++;
+    }
+  });
+  var totalGroups = Object.keys(seenRadioGroups).length;
+  var totalCount = required.length - Array.from(required).filter(function (el) {
+    return el.type === 'radio';
+  }).length + totalGroups;
+  var pct = totalCount > 0 ? Math.round((filled / totalCount) * 100) : 0;
+  document.getElementById('formProgressBar').style.width = pct + '%';
+  document.getElementById('formProgressLabel').textContent = pct + '% Complete';
+}
+
+/* ==================== FORM SUBMISSION ==================== */
+
+function initFormSubmission() {
+  var form = document.getElementById('applicationForm');
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+    if (!document.getElementById('declarationCheck').checked) {
+      showToast('Please accept the declaration before submitting.', 'error');
+      return;
+    }
+    if (!uploadedFiles.photo) { showToast('Applicant photograph is required.', 'error'); return; }
+    if (!uploadedFiles.signature) { showToast('Applicant signature is required.', 'error'); return; }
+    var missingRequiredDocs = DOCUMENT_FIELDS.filter(function (f) {
+      return f.required && f.key !== 'photo' && f.key !== 'signature' && !uploadedFiles[f.key];
+    });
+    if (missingRequiredDocs.length) {
+      showToast(missingRequiredDocs[0].label + ' upload is required.', 'error');
+      return;
+    }
+
+    var formData = buildFormDataObject();
+    showLoading('Submitting your application. Please do not close this window...');
+    google.script.run
+      .withSuccessHandler(function (result) {
+        hideLoading();
+        if (result.success) {
+          lastSubmittedPdfUrl = result.pdfUrl;
+          document.getElementById('applicationNumberPreview').value = result.applicationNumber;
+          showToast('Application submitted successfully! Application Number: ' + result.applicationNumber, 'success');
+          form.querySelectorAll('input, select, textarea').forEach(function (el) { el.disabled = true; });
+          document.getElementById('submitBtn').disabled = true;
+          document.getElementById('downloadPdfBtn').disabled = false;
+        } else {
+          showToast(result.message || 'Submission failed. Please try again.', 'error');
+        }
+      })
+      .withFailureHandler(function (err) {
+        hideLoading();
+        showToast('Server error: ' + err.message, 'error');
+      })
+      .submitApplication(formData);
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', function () {
+    setTimeout(function () {
+      uploadedFiles = {};
+      form.querySelectorAll('input, select, textarea').forEach(function (el) { el.disabled = false; });
+      document.getElementById('submitBtn').disabled = false;
+      document.getElementById('photoPreview').classList.add('d-none');
+      document.getElementById('signaturePreview').classList.add('d-none');
+      document.getElementById('ageDisplay').value = '';
+      document.getElementById('applicationNumberPreview').value = INITIAL_DATA.nextApplicationNumberPreview;
+      document.getElementById('downloadPdfBtn').disabled = true;
+      document.querySelectorAll('.doc-status').forEach(function (el) { el.textContent = ''; });
+      document.querySelectorAll('#trainingTable tbody tr, #employmentTable tbody tr').forEach(function (tr, idx) {
+        if (idx > 0) tr.remove();
+      });
+      updateProgress();
+    }, 0);
+  });
+
+  document.getElementById('printBtn').addEventListener('click', function () {
+    window.print();
+  });
+
+  document.getElementById('downloadPdfBtn').addEventListener('click', function () {
+    if (lastSubmittedPdfUrl) {
+      window.open(lastSubmittedPdfUrl, '_blank');
+    } else {
+      showToast('PDF is not ready yet.', 'error');
+    }
+  });
+}
+
+function buildFormDataObject() {
+  var form = document.getElementById('applicationForm');
+  var data = {};
+  var simpleFields = [
+    'positionAppliedFor', 'fullName', 'fathersName', 'husbandsName', 'mothersName', 'gender', 'maritalStatus',
+    'dob', 'aadhaar', 'mobile', 'altMobile', 'email', 'category', 'community', 'religion', 'nationality',
+    'district', 'mandal', 'village', 'pincode', 'permanentAddress', 'correspondenceAddress', 'localCandidate',
+    'idMark1', 'idMark2', 'widow', 'orphan', 'pwbd', 'disabilityPercent', 'disabilityNature', 'exServiceman',
+    'sportsCategory', 'ews', 'presentEmploymentStatus', 'reasonForLeaving', 'computerSkillLevel',
+    'chargeSheeted', 'convicted', 'dismissed', 'criminalRemarks', 'place', 'declarationDate'
+  ];
+  simpleFields.forEach(function (key) {
+    var el = form.querySelector('[name="' + key + '"]:checked') || form.querySelector('[name="' + key + '"]');
+    data[key] = el ? el.value : '';
+  });
+
+  data.age = document.getElementById('ageDisplay').value.replace(' years', '');
+  data.computerSkills = Array.from(document.querySelectorAll('input[name="computerSkillsCheckbox"]:checked')).map(function (c) { return c.value; }).join(', ');
+  data.educationDetails = JSON.stringify(collectEducationDetails());
+  data.trainingDetails = JSON.stringify(collectTrainingDetails());
+  data.employmentHistory = JSON.stringify(collectEmploymentHistory());
+  data.languageSkills = JSON.stringify(collectLanguageSkills());
+  data.declaration = document.getElementById('declarationCheck').checked;
+  data.files = uploadedFiles;
+
+  return data;
+}
+
+/* ==================== APPLICANT DASHBOARD ==================== */
+
+function initDashboard() {
+  document.getElementById('dashboardSearchForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var appNo = document.getElementById('searchAppNumber').value.trim();
+    var mobile = document.getElementById('searchMobile').value.trim();
+    showLoading('Searching for your application...');
+    google.script.run
+      .withSuccessHandler(function (result) {
+        hideLoading();
+        renderDashboardResult(result, appNo, mobile);
+      })
+      .withFailureHandler(function (err) {
+        hideLoading();
+        showToast('Error: ' + err.message, 'error');
+      })
+      .searchApplication(appNo, mobile);
+  });
+}
+
+function renderDashboardResult(result, appNo, mobile) {
+  var container = document.getElementById('dashboardResult');
+  if (!result.found) {
+    container.innerHTML = '<div class="alert alert-warning">No application found matching that Application Number and Mobile Number.</div>';
+    return;
+  }
+  var r = result.record;
+  container.innerHTML =
+    '<div class="card section-card mb-4">' +
+    '<div class="card-header section-header">Application Details <span class="status-badge status-' + escapeHtml(r.status) + ' float-end">' + escapeHtml(r.status) + '</span></div>' +
+    '<div class="card-body">' +
+    '<div class="row g-2">' +
+    infoCol('Application Number', r.applicationNumber) + infoCol('Full Name', r.fullName) +
+    infoCol('Position Applied For', r.positionAppliedFor) + infoCol('Mobile Number', r.mobile) +
+    infoCol('Email', r.email) + infoCol('Submission Date', r.submissionDate + ' ' + r.submissionTime) +
+    '</div>' +
+    '<div class="d-flex gap-2 mt-3">' +
+    '<button class="btn btn-primary" onclick="dashboardDownloadPdf(\'' + escapeHtml(appNo) + '\',\'' + escapeHtml(mobile) + '\')"><i class="fa-solid fa-download me-1"></i>Download PDF</button>' +
+    '<button class="btn btn-outline-primary" onclick="window.print()"><i class="fa-solid fa-print me-1"></i>Print</button>' +
+    '</div></div></div>';
+}
+
+function infoCol(label, value) {
+  return '<div class="col-md-4"><div class="small text-muted">' + escapeHtml(label) + '</div><div class="fw-semibold">' + escapeHtml(value) + '</div></div>';
+}
+
+function dashboardDownloadPdf(appNo, mobile) {
+  showLoading('Generating PDF...');
+  google.script.run
+    .withSuccessHandler(function (result) {
+      hideLoading();
+      if (result.success) {
+        window.open(result.pdfUrl, '_blank');
+      } else {
+        showToast(result.message || 'Could not generate PDF.', 'error');
+      }
+    })
+    .withFailureHandler(function (err) { hideLoading(); showToast('Error: ' + err.message, 'error'); })
+    .downloadApplicationPdf(appNo, mobile);
+}
+
+/* ==================== ADMIN PANEL ==================== */
+
+function initAdmin() {
+  document.getElementById('adminLoginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var password = document.getElementById('adminPasswordInput').value;
+    showLoading('Verifying credentials...');
+    google.script.run
+      .withSuccessHandler(function (res) {
+        hideLoading();
+        if (res.success) {
+          adminToken = res.token;
+          sessionStorage.setItem('wdcwAdminToken', adminToken);
+          document.getElementById('adminLoginCard').classList.add('d-none');
+          document.getElementById('adminPanelBody').classList.remove('d-none');
+          loadAdminApplications();
+        } else {
+          showToast(res.message || 'Login failed.', 'error');
+        }
+      })
+      .withFailureHandler(function (err) { hideLoading(); showToast('Error: ' + err.message, 'error'); })
+      .adminLogin(password);
+  });
+
+  document.getElementById('adminSearchInput').addEventListener('input', renderAdminTable);
+  document.getElementById('adminStatusFilter').addEventListener('change', renderAdminTable);
+  document.getElementById('adminPositionFilter').addEventListener('change', renderAdminTable);
+  document.getElementById('adminExportExcelBtn').addEventListener('click', exportAdminExcel);
+
+  // Auto-login if a valid session token already exists
+  if (adminToken) {
+    document.getElementById('adminLoginCard').classList.add('d-none');
+    document.getElementById('adminPanelBody').classList.remove('d-none');
+    loadAdminApplications();
+  }
+}
+
+function loadAdminApplications() {
+  showLoading('Loading applications...');
+  google.script.run
+    .withSuccessHandler(function (res) {
+      hideLoading();
+      if (res.success) {
+        adminRecordsCache = res.records;
+        renderAdminTable();
+      } else {
+        showToast(res.message || 'Session expired. Please log in again.', 'error');
+        adminLogout();
+      }
+    })
+    .withFailureHandler(function (err) { hideLoading(); showToast('Error: ' + err.message, 'error'); })
+    .getAllApplications(adminToken);
+}
+
+function adminLogout() {
+  sessionStorage.removeItem('wdcwAdminToken');
+  adminToken = '';
+  document.getElementById('adminLoginCard').classList.remove('d-none');
+  document.getElementById('adminPanelBody').classList.add('d-none');
+}
+
+function renderAdminTable() {
+  var search = document.getElementById('adminSearchInput').value.trim().toLowerCase();
+  var statusFilter = document.getElementById('adminStatusFilter').value;
+  var positionFilter = document.getElementById('adminPositionFilter').value;
+  var tbody = document.querySelector('#adminTable tbody');
+  var filtered = adminRecordsCache.filter(function (r) {
+    var matchesSearch = !search ||
+      (r.fullName && r.fullName.toLowerCase().indexOf(search) !== -1) ||
+      (r.applicationNumber && r.applicationNumber.toLowerCase().indexOf(search) !== -1) ||
+      (r.mobile && String(r.mobile).indexOf(search) !== -1);
+    var matchesStatus = !statusFilter || r.status === statusFilter;
+    var matchesPosition = !positionFilter || r.positionAppliedFor === positionFilter;
+    return matchesSearch && matchesStatus && matchesPosition;
+  });
+
+  tbody.innerHTML = filtered.map(function (r) {
+    return '<tr>' +
+      '<td>' + escapeHtml(r.applicationNumber) + '</td>' +
+      '<td>' + escapeHtml(r.fullName) + '</td>' +
+      '<td>' + escapeHtml(r.positionAppliedFor) + '</td>' +
+      '<td>' + escapeHtml(r.mobile) + '</td>' +
+      '<td>' + escapeHtml(r.submissionDate) + '</td>' +
+      '<td><span class="status-badge status-' + escapeHtml(r.status) + '">' + escapeHtml(r.status) + '</span></td>' +
+      '<td>' +
+      '<div class="d-flex gap-1 flex-wrap">' +
+      '<select class="form-select form-select-sm w-auto" onchange="adminChangeStatus(\'' + escapeHtml(r.applicationNumber) + '\', this.value)">' +
+      ['Received', 'Pending', 'Verified', 'Rejected', 'Selected'].map(function (s) {
+        return '<option value="' + s + '"' + (s === r.status ? ' selected' : '') + '>' + s + '</option>';
+      }).join('') +
+      '</select>' +
+      '<button class="btn btn-sm btn-outline-primary" title="View" onclick="adminViewApplicant(\'' + escapeHtml(r.applicationNumber) + '\')"><i class="fa-solid fa-eye"></i></button>' +
+      '<button class="btn btn-sm btn-outline-secondary" title="Download PDF" onclick="adminDownloadPdf(\'' + escapeHtml(r.applicationNumber) + '\')"><i class="fa-solid fa-file-pdf"></i></button>' +
+      '</div></td></tr>';
+  }).join('') || '<tr><td colspan="7" class="text-center text-muted py-4">No applications found.</td></tr>';
+}
+
+function adminChangeStatus(applicationNumber, newStatus) {
+  google.script.run
+    .withSuccessHandler(function (res) {
+      if (res.success) {
+        showToast('Status updated to ' + newStatus, 'success');
+        var rec = adminRecordsCache.find(function (r) { return r.applicationNumber === applicationNumber; });
+        if (rec) rec.status = newStatus;
+        renderAdminTable();
+      } else {
+        showToast(res.message || 'Update failed.', 'error');
+      }
+    })
+    .withFailureHandler(function (err) { showToast('Error: ' + err.message, 'error'); })
+    .updateApplicationStatus(adminToken, applicationNumber, newStatus);
+}
+
+function adminViewApplicant(applicationNumber) {
+  var r = adminRecordsCache.find(function (x) { return x.applicationNumber === applicationNumber; });
+  if (!r) return;
+  var modalHtml =
+    '<div class="modal fade" id="viewApplicantModal" tabindex="-1">' +
+    '<div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content">' +
+    '<div class="modal-header section-header"><h5 class="modal-title">' + escapeHtml(r.applicationNumber) + ' - ' + escapeHtml(r.fullName) + '</h5>' +
+    '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>' +
+    '<div class="modal-body">' + buildApplicantDetailHtml(r) + '</div>' +
+    '<div class="modal-footer">' +
+    '<button class="btn btn-outline-primary" onclick="adminDownloadPdf(\'' + escapeHtml(applicationNumber) + '\')"><i class="fa-solid fa-file-pdf me-1"></i>Download PDF</button>' +
+    '<button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>' +
+    '</div></div></div></div>';
+  document.getElementById('adminApplicantModalContainer').innerHTML = modalHtml;
+  var modal = new bootstrap.Modal(document.getElementById('viewApplicantModal'));
+  modal.show();
+}
+
+function buildApplicantDetailHtml(r) {
+  function row(label, value) {
+    return '<div class="col-md-6 mb-2"><span class="text-muted small">' + escapeHtml(label) + '</span><br><span class="fw-semibold">' + escapeHtml(value) + '</span></div>';
+  }
+  var fields = [
+    ['Position Applied For', r.positionAppliedFor], ["Father's Name", r.fathersName], ['Gender', r.gender],
+    ['Marital Status', r.maritalStatus], ['Date of Birth', r.dob], ['Age', r.age], ['Aadhaar', r.aadhaar],
+    ['Mobile', r.mobile], ['Email', r.email], ['Category', r.category], ['District', r.district],
+    ['Mandal', r.mandal], ['Village', r.village], ['Status', r.status]
+  ];
+  var html = '<div class="row">';
+  fields.forEach(function (f) { html += row(f[0], f[1]); });
+  html += '</div>';
+  if (r.photoUrl) html += '<a href="' + r.photoUrl + '" target="_blank" class="btn btn-sm btn-outline-primary me-2 mt-2"><i class="fa-solid fa-image me-1"></i>View Photo</a>';
+  if (r.signatureUrl) html += '<a href="' + r.signatureUrl + '" target="_blank" class="btn btn-sm btn-outline-primary mt-2"><i class="fa-solid fa-signature me-1"></i>View Signature</a>';
+  return html;
+}
+
+function adminDownloadPdf(applicationNumber) {
+  showLoading('Generating PDF...');
+  google.script.run
+    .withSuccessHandler(function (res) {
+      hideLoading();
+      if (res.success) window.open(res.pdfUrl, '_blank');
+      else showToast(res.message || 'Could not generate PDF.', 'error');
+    })
+    .withFailureHandler(function (err) { hideLoading(); showToast('Error: ' + err.message, 'error'); })
+    .adminGetApplicationPdf(adminToken, applicationNumber);
+}
+
+function exportAdminExcel() {
+  showLoading('Preparing Excel export...');
+  google.script.run
+    .withSuccessHandler(function (res) {
+      hideLoading();
+      if (!res.success) { showToast(res.message || 'Export failed.', 'error'); return; }
+      var link = document.createElement('a');
+      link.href = 'data:' + res.mimeType + ';base64,' + res.base64;
+      link.download = res.fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    })
+    .withFailureHandler(function (err) { hideLoading(); showToast('Error: ' + err.message, 'error'); })
+    .exportApplicationsExcel(adminToken);
+}
+</script>

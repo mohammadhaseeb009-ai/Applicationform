@@ -1,0 +1,219 @@
+<style>
+  :root {
+    --gov-blue: #0b3d91;
+    --gov-blue-dark: #072a66;
+    --gov-blue-light: #e8eef9;
+    --gov-grey: #f4f6f9;
+    --gov-white: #ffffff;
+    --gov-accent: #d4a017;
+  }
+
+  body {
+    background: var(--gov-grey);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #212529;
+  }
+
+  /* ==================== HEADER ==================== */
+  .gov-header {
+    background: var(--gov-white);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    z-index: 1030;
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 24px;
+    gap: 16px;
+  }
+  .header-logo-box { flex: 0 0 auto; width: 80px; display:flex; justify-content:center; }
+  .header-logo { max-height: 70px; max-width: 100%; object-fit: contain; }
+  .header-title-box { flex: 1 1 auto; text-align: center; }
+  .header-title-main {
+    color: var(--gov-blue);
+    font-weight: 800;
+    font-size: 1.6rem;
+    margin: 0;
+    letter-spacing: 0.5px;
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+  .header-title-sub {
+    color: var(--gov-blue-dark);
+    font-weight: 700;
+    font-size: 1.15rem;
+    margin: 2px 0 0;
+  }
+  .header-title-district {
+    color: var(--gov-blue-dark);
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin: 2px 0 0;
+  }
+  .header-divider {
+    height: 3px;
+    background: linear-gradient(90deg, var(--gov-blue), var(--gov-accent), var(--gov-blue));
+  }
+  .header-banner {
+    background: var(--gov-blue);
+    color: #fff;
+    text-align: center;
+    padding: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    font-size: 1.05rem;
+  }
+
+  /* ==================== NAV ==================== */
+  .portal-nav {
+    background: var(--gov-blue-light);
+    padding: 10px 0;
+    border-bottom: 1px solid #c7d5ef;
+  }
+  .nav-btn {
+    color: var(--gov-blue-dark);
+    font-weight: 600;
+    border: 1px solid var(--gov-blue);
+    background: #fff;
+  }
+  .nav-btn.active, .nav-btn:hover {
+    background: var(--gov-blue);
+    color: #fff;
+  }
+
+  /* ==================== PROGRESS ==================== */
+  .progress-label {
+    text-align: center;
+    font-weight: 600;
+    color: var(--gov-blue-dark);
+    margin-top: 6px;
+    font-size: 0.9rem;
+  }
+
+  /* ==================== SECTION CARDS ==================== */
+  .section-card {
+    border: none;
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(11,61,145,0.08);
+    animation: fadeInUp 0.35s ease;
+    overflow: hidden;
+  }
+  .section-header {
+    background: var(--gov-blue);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: 14px 20px;
+    border: none;
+  }
+  .card-body { padding: 20px; }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .req { color: #c0392b; }
+
+  .form-label { font-weight: 600; color: #333; font-size: 0.9rem; }
+
+  .form-control:focus, .form-select:focus {
+    border-color: var(--gov-blue);
+    box-shadow: 0 0 0 0.2rem rgba(11,61,145,0.15);
+  }
+
+  .invalid-feedback-custom {
+    color: #c0392b;
+    font-size: 0.8rem;
+    margin-top: 2px;
+    min-height: 1em;
+  }
+
+  .upload-preview-box { min-height: 4px; }
+  .upload-preview {
+    max-height: 140px;
+    max-width: 140px;
+    border: 2px solid var(--gov-blue-light);
+    border-radius: 8px;
+    padding: 4px;
+    background: #fff;
+  }
+
+  /* ==================== BUTTONS ==================== */
+  .btn-primary {
+    background-color: var(--gov-blue);
+    border-color: var(--gov-blue);
+  }
+  .btn-primary:hover, .btn-primary:focus {
+    background-color: var(--gov-blue-dark);
+    border-color: var(--gov-blue-dark);
+  }
+  .btn-outline-primary {
+    color: var(--gov-blue);
+    border-color: var(--gov-blue);
+  }
+  .btn-outline-primary:hover {
+    background-color: var(--gov-blue);
+    border-color: var(--gov-blue);
+  }
+
+  /* ==================== FOOTER ==================== */
+  .gov-footer {
+    background: var(--gov-blue-dark);
+    color: #eef2fb;
+    padding: 24px 0;
+    margin-top: 40px;
+    font-size: 0.9rem;
+  }
+
+  /* ==================== LOADING OVERLAY ==================== */
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(7,42,102,0.85);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+  .loading-overlay.d-none { display: none !important; }
+  .loading-text { color: #fff; font-weight: 600; }
+
+  /* ==================== TOAST ==================== */
+  #appToast {
+    background-color: var(--gov-blue);
+    color: #fff;
+    min-width: 280px;
+  }
+  #appToast.bg-success-toast { background-color: #1e7e34; }
+  #appToast.bg-danger-toast { background-color: #b02a37; }
+
+  /* ==================== ADMIN / DASHBOARD ==================== */
+  .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+  .status-Received { background: #d9e6ff; color: #0b3d91; }
+  .status-Pending { background: #fff3cd; color: #856404; }
+  .status-Verified { background: #d1ecf1; color: #0c5460; }
+  .status-Rejected { background: #f8d7da; color: #721c24; }
+  .status-Selected { background: #d4edda; color: #155724; }
+
+  /* ==================== PRINT ==================== */
+  @media print {
+    .gov-header, .portal-nav, .gov-footer, #loadingOverlay,
+    #resetBtn, #printBtn, #downloadPdfBtn, #submitBtn, .toast-container {
+      display: none !important;
+    }
+    body { background: #fff; }
+    .section-card { box-shadow: none; border: 1px solid #ccc; }
+  }
+
+  /* ==================== RESPONSIVE ==================== */
+  @media (max-width: 768px) {
+    .header-top { flex-direction: column; text-align: center; }
+    .header-title-main { font-size: 1.25rem; }
+    .header-title-sub { font-size: 1rem; }
+    .header-logo-box { width: 60px; }
+    .nav-btn { font-size: 0.8rem; padding: 8px 6px; }
+  }
+</style>
