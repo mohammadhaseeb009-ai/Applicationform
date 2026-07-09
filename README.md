@@ -16,8 +16,28 @@ needs no external server, database, or hosting.
 | `Stylesheet.html` | CSS, included into `Index.html` via `<?!= include('Stylesheet'); ?>` |
 | `JavaScript.html` | Client-side JS, included into `Index.html` via `<?!= include('JavaScript'); ?>` |
 | `style.css` / `script.js` | Plain-text mirrors of the CSS/JS above, kept for easy editing outside the Apps Script editor. **Google Apps Script only serves `.html`, `.gs` and `.json` files** — so when you paste content into the Apps Script editor, `style.css` goes inside `Stylesheet.html`'s `<style>` tag and `script.js` goes inside `JavaScript.html`'s `<script>` tag. This repo already has both wired up correctly; you only need `style.css`/`script.js` if you want to edit styling/logic in a plain-text editor first. |
+| `index.html` (lowercase) | A **static GitHub Pages landing page only** — not part of the app itself. See "GitHub Pages" section below. Don't confuse it with `Index.html` (capital I), which is the real Apps Script template and the one you paste into the Apps Script editor. |
 
 ---
+
+## 0. GitHub Pages note (important)
+
+This repository's actual application (`Index.html`, `Stylesheet.html`, `JavaScript.html`,
+`Code.gs`) is a **Google Apps Script web app**. It cannot run as a static site —
+it depends on Apps Script's server runtime for everything (Sheets/Drive/Gmail
+access, `doGet()`, `google.script.run` calls). GitHub Pages only serves static
+files, so it can never execute `Code.gs` or process the `<?!= ... ?>`
+scriptlets in `Index.html`.
+
+The lowercase `index.html` at the repo root exists purely so that if you
+enable GitHub Pages for this repo (**Settings → Pages → Source: `main` branch,
+`/ (root)` folder**), visitors land on an explanatory page instead of a 404,
+with a link out to the real deployment and to the deployment guide below.
+
+Once you've deployed the real Apps Script web app (Section 3), open
+`index.html`, replace the empty `LIVE_APP_URL` constant near the bottom with
+your `https://script.google.com/macros/s/.../exec` URL, and commit — the
+"Open Application Portal" button will then link to the live app.
 
 ## 1. Google Sheet setup
 

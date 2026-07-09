@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WD&amp;CW Peddapalli - Recruitment Portal (Source Repository)</title>
+<style>
+  :root { --gov-blue:#0b3d91; --gov-blue-dark:#072a66; --gov-grey:#f4f6f9; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--gov-grey); color: #212529;
+  }
+  header {
+    background: #fff; text-align: center; padding: 24px 16px 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  header h1 { color: var(--gov-blue); font-size: 1.6rem; margin: 0; font-family: Georgia, serif; font-weight: 800; }
+  header h2 { color: var(--gov-blue-dark); font-size: 1.05rem; margin: 6px 0 0; }
+  header h3 { color: var(--gov-blue-dark); font-size: 0.9rem; margin: 2px 0 0; font-weight: 600; }
+  .divider { height: 3px; background: linear-gradient(90deg, var(--gov-blue), #d4a017, var(--gov-blue)); }
+  main { max-width: 720px; margin: 32px auto; padding: 0 16px; }
+  .card {
+    background: #fff; border-radius: 14px; box-shadow: 0 2px 10px rgba(11,61,145,0.08);
+    padding: 24px; margin-bottom: 20px;
+  }
+  .card h4 { color: var(--gov-blue); margin-top: 0; }
+  .notice {
+    background: #fff3cd; border: 1px solid #ffe69c; color: #664d03;
+    border-radius: 10px; padding: 14px 18px; font-size: 0.92rem; margin-bottom: 20px;
+  }
+  .btn {
+    display: inline-block; padding: 12px 22px; border-radius: 8px; font-weight: 700;
+    text-decoration: none; margin: 6px 8px 6px 0;
+  }
+  .btn-primary { background: var(--gov-blue); color: #fff; }
+  .btn-primary.disabled { background: #9aa7bd; pointer-events: none; }
+  .btn-outline { background: #fff; color: var(--gov-blue); border: 2px solid var(--gov-blue); }
+  code {
+    background: #eef2fb; padding: 2px 6px; border-radius: 4px; font-size: 0.85em;
+  }
+  footer {
+    text-align: center; padding: 24px 16px; color: #eef2fb; background: var(--gov-blue-dark);
+    font-size: 0.85rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Government of Telangana</h1>
+  <h2>Women Development and Child Welfare Department</h2>
+  <h3>Peddapalli District</h3>
+</header>
+<div class="divider"></div>
+
+<main>
+  <div class="notice">
+    <strong>You're viewing the source code repository</strong>, not the live application.
+    This project is a <strong>Google Apps Script</strong> web app — it must run on
+    Google's servers (Sheets/Drive/Gmail access, form processing, PDF generation) and
+    cannot function as a static GitHub Pages site. This page is just a signpost.
+  </div>
+
+  <div class="card">
+    <h4>Live Application</h4>
+    <p id="liveLinkText">
+      The department has not yet published the live deployment link here.
+      Once deployed via Google Apps Script (see below), replace the
+      <code>LIVE_APP_URL</code> value near the top of this file's
+      <code>&lt;script&gt;</code> block with the real
+      <code>https://script.google.com/macros/s/.../exec</code> URL.
+    </p>
+    <a id="liveLinkBtn" class="btn btn-primary disabled" href="#">Open Application Portal</a>
+  </div>
+
+  <div class="card">
+    <h4>For Administrators — Deployment</h4>
+    <p>Full step-by-step deployment instructions (Google Sheet setup, Drive folder
+    setup, enabling the Drive API, setting the admin password, and publishing the
+    web app) are in this repository's <code>README.md</code>.</p>
+    <a class="btn btn-outline" href="https://github.com/mohammadhaseeb009-ai/Applicationform/blob/main/README.md">View Deployment Guide</a>
+    <a class="btn btn-outline" href="https://github.com/mohammadhaseeb009-ai/Applicationform">View Source Code</a>
+  </div>
+</main>
+
+<footer>
+  Government of Telangana &middot; Women Development and Child Welfare Department &middot; Peddapalli District<br>
+  Designed &amp; Developed by District Welfare Office, Peddapalli
+</footer>
+
+<script>
+  // Set this to your deployed Apps Script Web App URL once available, e.g.:
+  // const LIVE_APP_URL = "https://script.google.com/macros/s/AKfycb.../exec";
+  const LIVE_APP_URL = "";
+
+  if (LIVE_APP_URL) {
+    var btn = document.getElementById('liveLinkBtn');
+    btn.href = LIVE_APP_URL;
+    btn.classList.remove('disabled');
+    document.getElementById('liveLinkText').textContent =
+      'Click below to open the live recruitment application.';
+  }
+</script>
+</body>
+</html>
